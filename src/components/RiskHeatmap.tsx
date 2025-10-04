@@ -1,30 +1,20 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { MapPin, Layers } from "lucide-react";
+import { MapPin, Layers, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { cn } from "@/lib/utils";
+import { useAppSelector } from "@/store/hooks";
 
 interface RiskHeatmapProps {
   fullscreen?: boolean;
 }
 
-// Sample risk zones data
-const riskZones = [
-  { lat: 28.6139, lng: 77.2090, risk: "critical", name: "Delhi NCR", incidents: 45 },
-  { lat: 19.0760, lng: 72.8777, risk: "high", name: "Mumbai", incidents: 32 },
-  { lat: 12.9716, lng: 77.5946, risk: "high", name: "Bangalore", incidents: 28 },
-  { lat: 13.0827, lng: 80.2707, risk: "medium", name: "Chennai", incidents: 18 },
-  { lat: 22.5726, lng: 88.3639, risk: "critical", name: "Kolkata", incidents: 38 },
-  { lat: 17.3850, lng: 78.4867, risk: "medium", name: "Hyderabad", incidents: 22 },
-  { lat: 23.0225, lng: 72.5714, risk: "low", name: "Ahmedabad", incidents: 12 },
-  { lat: 26.9124, lng: 75.7873, risk: "medium", name: "Jaipur", incidents: 15 },
-];
-
 const RiskHeatmap = ({ fullscreen = false }: RiskHeatmapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
+  const { hotspots } = useAppSelector((state) => state.prediction);
 
   const getRiskColor = (risk: string) => {
     switch (risk) {
@@ -37,7 +27,13 @@ const RiskHeatmap = ({ fullscreen = false }: RiskHeatmapProps) => {
   };
 
   useEffect(() => {
-    if (!mapContainer.current || map.current) return;
+    if (!mapContainer.current) return;
+
+    // Clear existing map if it exists
+    if (map.current) {
+      map.current.remove();
+      map.current = null;
+    }
 
     // Initialize map
     map.current = L.map(mapContainer.current, {
@@ -50,34 +46,37 @@ const RiskHeatmap = ({ fullscreen = false }: RiskHeatmapProps) => {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(map.current);
 
-    // Add risk zone markers
-    const bounds: [number, number][] = [];
-    
-    riskZones.forEach((zone) => {
-      const radius = zone.risk === "critical" ? 20000 : zone.risk === "high" ? 15000 : 10000;
+    // Add hotspot markers from Redux if available
+    if (hotspots.length > 0) {
+      const bounds: [number, number][] = [];
       
-      const circle = L.circle([zone.lat, zone.lng], {
-        color: getRiskColor(zone.risk),
-        fillColor: getRiskColor(zone.risk),
-        fillOpacity: 0.4,
-        radius: radius,
-        weight: 2,
-      }).addTo(map.current!);
+      hotspots.forEach((hotspot) => {
+        const radius = hotspot.cluster_score > 80 ? 20000 : hotspot.cluster_score > 50 ? 15000 : 10000;
+        const color = hotspot.cluster_score > 80 ? "#ef4444" : hotspot.cluster_score > 50 ? "#f59e0b" : "#eab308";
+        
+        const circle = L.circle([hotspot.coordinates[0], hotspot.coordinates[1]], {
+          color: color,
+          fillColor: color,
+          fillOpacity: 0.4,
+          radius: radius,
+          weight: 2,
+        }).addTo(map.current!);
 
-      circle.bindPopup(`
-        <div class="text-sm">
-          <h3 class="font-semibold">${zone.name}</h3>
-          <p class="text-xs capitalize">Risk: ${zone.risk}</p>
-          <p class="text-xs">Incidents: ${zone.incidents}</p>
-        </div>
-      `);
+        circle.bindPopup(`
+          <div class="text-sm">
+            <h3 class="font-semibold">Risk Hotspot</h3>
+            <p class="text-xs">Score: ${hotspot.cluster_score}</p>
+            <p class="text-xs">ATMs: ${hotspot.atm_count}</p>
+          </div>
+        `);
 
-      bounds.push([zone.lat, zone.lng]);
-    });
+        bounds.push([hotspot.coordinates[0], hotspot.coordinates[1]]);
+      });
 
-    // Fit bounds to show all markers
-    if (bounds.length > 0) {
-      map.current.fitBounds(bounds, { padding: [50, 50] });
+      // Fit bounds to show all markers
+      if (bounds.length > 0) {
+        map.current.fitBounds(bounds, { padding: [50, 50] });
+      }
     }
 
     // Cleanup
@@ -87,7 +86,7 @@ const RiskHeatmap = ({ fullscreen = false }: RiskHeatmapProps) => {
         map.current = null;
       }
     };
-  }, []);
+  }, [hotspots]);
 
   return (
     <Card className={fullscreen ? "h-[calc(100vh-12rem)]" : "h-full"}>
@@ -109,28 +108,45 @@ const RiskHeatmap = ({ fullscreen = false }: RiskHeatmapProps) => {
         </div>
       </CardHeader>
       <CardContent>
-        <div className={cn(
-          "relative rounded-lg overflow-hidden border border-border",
-          fullscreen ? "h-[calc(100vh-16rem)]" : "h-[450px]"
-        )}>
-          <div ref={mapContainer} className="h-full w-full" />
-          
-          {/* Legend */}
-          <div className="absolute bottom-4 left-4 z-[1000] inline-flex gap-4 bg-card/90 backdrop-blur-sm p-4 rounded-lg border border-border shadow-lg">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-destructive rounded"></div>
-              <span className="text-xs text-foreground">Critical Risk</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-warning rounded"></div>
-              <span className="text-xs text-foreground">High Risk</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-success rounded"></div>
-              <span className="text-xs text-foreground">Low Risk</span>
+        {hotspots.length === 0 ? (
+          <div className={cn(
+            "relative rounded-lg border border-border bg-card/50 flex items-center justify-center",
+            fullscreen ? "h-[calc(100vh-16rem)]" : "h-[450px]"
+          )}>
+            <div className="text-center space-y-4 p-8">
+              <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto" />
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold text-foreground">No Predictions Yet</h3>
+                <p className="text-sm text-muted-foreground max-w-md">
+                  Run prediction from the Analytics section to visualize risk zones on the map.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className={cn(
+            "relative rounded-lg overflow-hidden border border-border",
+            fullscreen ? "h-[calc(100vh-16rem)]" : "h-[450px]"
+          )}>
+            <div ref={mapContainer} className="h-full w-full" />
+            
+            {/* Legend */}
+            <div className="absolute bottom-4 left-4 z-[1000] inline-flex gap-4 bg-card/90 backdrop-blur-sm p-4 rounded-lg border border-border shadow-lg">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-destructive rounded"></div>
+                <span className="text-xs text-foreground">Critical Risk (&gt;80)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-warning rounded"></div>
+                <span className="text-xs text-foreground">High Risk (50-80)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-yellow-500 rounded"></div>
+                <span className="text-xs text-foreground">Medium Risk (&lt;50)</span>
+              </div>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
