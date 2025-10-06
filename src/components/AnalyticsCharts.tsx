@@ -258,6 +258,10 @@ import { setPredictionData, setLoading, setError } from "@/store/predictionSlice
 import { fetchPredictions } from "@/services/predictionService";
 import { toast } from "sonner";
 import axios from "axios";
+// Example using fetch
+const apiUrl = import.meta.env.VITE_API_URL;
+
+
 
 const AnalyticsCharts = () => {
   const dispatch = useAppDispatch();
@@ -277,7 +281,7 @@ const AnalyticsCharts = () => {
     const fetchRegions = async () => {
       setLoadingRegions(true);
       try {
-        const { data } = await axios.get("/api/v1/regions/getregions");
+        const { data } = await axios.get(`${apiUrl}/api/v1/regions/getregions`);
         setRegions(data.data || []);
       } catch (err) {
         console.error("Failed to fetch regions", err);

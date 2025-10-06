@@ -1,5 +1,5 @@
 import axios from 'axios';
-
+const apiUrl = import.meta.env.VITE_API_URL;
 /**
  * Placeholder function to fetch predictions from backend
  * @param {Object} filters - Filter parameters
@@ -11,7 +11,7 @@ import axios from 'axios';
  */
 export const fetchPredictions = async (filters) => {
   try {
-    const response = await axios.post('/api/v1/cybercrime/hotspotPrediction', filters, {
+    const response = await axios.post(`${apiUrl}/api/v1/cybercrime/hotspotPrediction`, filters, {
       headers: {
         'Content-Type': 'application/json',
       },
