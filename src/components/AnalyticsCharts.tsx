@@ -258,6 +258,7 @@ import { setPredictionData, setLoading, setError } from "@/store/predictionSlice
 import { fetchPredictions } from "@/services/predictionService";
 import { toast } from "sonner";
 import axios from "axios";
+import AlertFeed from "./AlertFeed.tsx";
 // Example using fetch
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -422,7 +423,7 @@ const AnalyticsCharts = () => {
         </Card>
 
         {/* Alerts */}
-        <Card>
+        {/* <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-warning" /> Alerts
@@ -440,7 +441,8 @@ const AnalyticsCharts = () => {
               ))
             )}
           </CardContent>
-        </Card>
+        </Card> */}
+        <AlertFeed alerts={alerts} maxHeight="400px" />
       </div>
     </div>
   );

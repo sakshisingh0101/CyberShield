@@ -14,6 +14,26 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { user, signOut, loading } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
+  const [metrics, setMetrics] = useState({
+  activeAlerts: 1,
+  complaintsToday: 21,
+  riskZones: 3,
+  predictionAccuracy: 97, // in percent
+});
+
+// Optionally, simulate updates for demo
+// useEffect(() => {
+//   const interval = setInterval(() => {
+//     setMetrics((prev) => ({
+//       activeAlerts: Math.floor(Math.random() * 10), // 0-9
+//       complaintsToday: Math.floor(Math.random() * 20), // 0-19
+//       riskZones: Math.floor(Math.random() * 5), // 0-4
+//       predictionAccuracy: Math.floor(70 + Math.random() * 30), // 70-99%
+//     }));
+//   }, 5000); // every 5s
+
+//   return () => clearInterval(interval);
+// }, []);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -98,7 +118,7 @@ const Dashboard = () => {
       <main className="container mx-auto px-4 py-6 space-y-6">
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricsCard
+          {/* <MetricsCard
             title="Active Alerts"
             value="0"
             change="0%"
@@ -127,8 +147,40 @@ const Dashboard = () => {
             change="0%"
             icon={TrendingUp}
             trend="up"
-            className="border-success/20"
-          />
+            className="border-success/20" */}
+          {/* /> */}
+          <MetricsCard
+  title="Active Alerts"
+  value={metrics.activeAlerts.toString()}
+  change="0%" // optional: you can calculate delta if you want
+  icon={AlertCircle}
+  trend="up"
+  className="border-destructive/20"
+/>
+<MetricsCard
+  title="Complaints Today"
+  value={metrics.complaintsToday.toString()}
+  change="0%"
+  icon={Activity}
+  trend="up"
+/>
+<MetricsCard
+  title="Risk Zones"
+  value={metrics.riskZones.toString()}
+  change="0%"
+  icon={MapPin}
+  trend="down"
+  className="border-warning/20"
+/>
+<MetricsCard
+  title="Prediction Accuracy"
+  value={`${metrics.predictionAccuracy}%`}
+  change="0%"
+  icon={TrendingUp}
+  trend="up"
+  className="border-success/20"
+/>
+
         </div>
 
         {/* Main Content Tabs */}
@@ -165,7 +217,7 @@ const Dashboard = () => {
           </TabsContent>
 
           <TabsContent value="analytics">
-            <AnalyticsCharts detailed />
+            <AnalyticsCharts  />
           </TabsContent>
 
           <TabsContent value="complaints">
