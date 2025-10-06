@@ -282,7 +282,8 @@ const AnalyticsCharts = () => {
       setLoadingRegions(true);
       try {
         const { data } = await axios.get(`${apiUrl}/api/v1/regions/getregions`);
-        console.log("regions fetched successfully")
+        console.log("regions fetched successfully: ", data.data)
+
         setRegions(data.data || []);
       } catch (err) {
         console.error("Failed to fetch regions", err);
