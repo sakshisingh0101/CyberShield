@@ -11,12 +11,12 @@ import axios from 'axios';
  */
 export const fetchPredictions = async (filters) => {
   try {
-    const response = await axios.post('/predict', filters, {
+    const response = await axios.post('/api/v1/cybercrime/hotspotPrediction', filters, {
       headers: {
         'Content-Type': 'application/json',
       },
     });
-    
+    console.log("response in service page: ",response,"   ", "response.data: ",response.data)
     return response.data;
   } catch (error) {
     console.error('Error fetching predictions:', error);
