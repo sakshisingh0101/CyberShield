@@ -75,9 +75,18 @@ export interface Hotspot {
   member_atms: string[];
 }
 
+// export interface Alert {
+//   atm_id: string;
+//   action: string;
+// }
+
 export interface Alert {
   atm_id: string;
+  risk_score: number;      // added
+  cluster_id: number;      // added
   action: string;
+  severity: 'LOW' | 'HIGH'; // added
+  reason: string;          // added
 }
 
 interface PredictionState {
