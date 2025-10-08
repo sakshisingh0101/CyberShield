@@ -252,6 +252,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import axios from "axios";
+import { toast } from "sonner";
+const apiUrl = import.meta.env.VITE_API_URL;
 
 interface Alert {
   atm_id: string;
@@ -292,6 +295,15 @@ const AlertFeed = ({ maxHeight = "500px", alerts }: AlertFeedProps) => {
         return Info;
     }
   };
+  const handleSendAlert = async (alert) => {
+  try {
+    const res = await axios.post(`${apiUrl}/api/v1/alerts/send`, alert);
+    toast.success("✅ Alert sent successfully!");
+  } catch (err) {
+  toast.error("❌ Failed to send alert");
+  }
+};
+
 
   return (
     <Card className="h-full">
@@ -358,7 +370,7 @@ const AlertFeed = ({ maxHeight = "500px", alerts }: AlertFeedProps) => {
                       <div className="flex items-center gap-2 mt-1">
   <button
     className="px-2 py-1 text-xs rounded bg-destructive text-white hover:bg-red-700 transition"
-    // onClick={() => handleSendAlert(a)}
+    onClick={() => handleSendAlert(a)}
   >
     Send Alert
   </button>
